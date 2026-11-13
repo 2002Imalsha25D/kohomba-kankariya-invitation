@@ -1,6 +1,5 @@
 
 document.addEventListener('DOMContentLoaded', () => {
-
   const coverScreen = document.getElementById('coverScreen');
   const videoScreen = document.getElementById('videoScreen');
   const invitationScreen = document.getElementById('invitationScreen');
@@ -23,103 +22,154 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentStage = 'cover';
   let soundEnabled = true;
-  let videoRequest = 0;
+  let audioUnlocked = false;
+  let musicRequest = 0;
 
-  // AUDIO CONFIGURATION
+  // =========================================
+  // BACKGROUND MUSIC
+  // =========================================
 
-  music.src = MEDIA.music;
+  // Use the source already defined in index.html.
+  // Do not assign music.src a second time.
   music.loop = true;
-  music.volume = 0.45;
+  music.volume = 0.65;
+  music.muted = false;
   music.preload = 'auto';
 
   function updateSoundButtons() {
+    const actuallyPlaying = !music.paused && !music.muted;
+
     soundButtons.forEach(button => {
       const label = button.querySelector('.sound-label');
       const icon = button.querySelector('.sound-icon');
 
+      const on = soundEnabled &&
+        (actuallyPlaying || currentStage === 'video');
+
       if (label) {
-        label.textContent = soundEnabled
-          ? 'SOUND ON'
-          : 'SOUND OFF';
+        label.textContent = on ? 'SOUND ON' : 'SOUND OFF';
       }
 
       if (icon) {
-        icon.textContent = soundEnabled ? '♫' : '♪';
+        icon.textContent = on ? '♫' : '♪';
       }
 
-      button.setAttribute(
-        'aria-pressed',
-        String(soundEnabled)
-      );
+      button.setAttribute('aria-pressed', String(on));
     });
   }
 
-  async function playMusic() {
+  function pauseMusic() {
+    musicRequest++;
+    music.pause();
+    updateSoundButtons();
+  }
+
+  function playMusic() {
     if (!soundEnabled || currentStage === 'video') {
-      return;
+      return Promise.resolve(false);
     }
+
+    if (!music.paused) {
+      updateSoundButtons();
+      return Promise.resolve(true);
+    }
+
+    const request = ++musicRequest;
+
+    music.muted = false;
+
+    let attempt;
 
     try {
-      if (music.paused) {
-        await music.play();
-      }
+      attempt = music.play();
     } catch (error) {
-      console.warn(
-        'Background music requires user interaction:',
-        error
-      );
+      console.warn('Music playback error:', error);
+      updateSoundButtons();
+      return Promise.resolve(false);
+    }
+
+    return Promise.resolve(attempt)
+      .then(() => {
+        if (request !== musicRequest ||
+            !soundEnabled ||
+            currentStage === 'video') {
+          music.pause();
+          updateSoundButtons();
+          return false;
+        }
+
+        audioUnlocked = true;
+        updateSoundButtons();
+        return true;
+      })
+      .catch(error => {
+        console.warn('Music playback blocked:', error);
+        updateSoundButtons();
+        return false;
+      });
+  }
+
+  // User interactions can unlock browser audio.
+  function unlockAudio() {
+    if (!soundEnabled || currentStage === 'video') return;
+
+    if (music.paused) {
+      playMusic();
     }
   }
 
-  function stopMusic() {
-    music.pause();
-  }
+  // Actual playback events keep the icon accurate.
+  music.addEventListener('play', updateSoundButtons);
+  music.addEventListener('pause', updateSoundButtons);
+  music.addEventListener('playing', () => {
+    audioUnlocked = true;
+    updateSoundButtons();
+  });
 
+  music.addEventListener('error', () => {
+    console.error('Unable to load background music:', music.error);
+    updateSoundButtons();
+  });
+
+  // SOUND ON / OFF
   soundButtons.forEach(button => {
-    button.addEventListener('click', async () => {
-      soundEnabled = !soundEnabled;
-      updateSoundButtons();
-
+    button.addEventListener('click', () => {
       if (soundEnabled) {
-        await playMusic();
+        soundEnabled = false;
+        pauseMusic();
       } else {
-        stopMusic();
+        soundEnabled = true;
+        updateSoundButtons();
+        playMusic();
       }
     });
   });
 
+  // =========================================
   // SCREEN NAVIGATION
+  // =========================================
 
   function showScreen(stage) {
     currentStage = stage;
 
-    coverScreen.classList.toggle(
-      'active', stage === 'cover'
-    );
-
-    videoScreen.classList.toggle(
-      'active', stage === 'video'
-    );
-
-    invitationScreen.classList.toggle(
-      'active', stage === 'invitation'
-    );
+    coverScreen.classList.toggle('active', stage === 'cover');
+    videoScreen.classList.toggle('active', stage === 'video');
+    invitationScreen.classList.toggle('active', stage === 'invitation');
 
     window.scrollTo(0, 0);
+    updateSoundButtons();
   }
 
-  // CHOOSE MOBILE OR DESKTOP VIDEO
+  // =========================================
+  // MOBILE / DESKTOP VIDEO
+  // =========================================
 
   function isMobile() {
-    return window.matchMedia(
-      '(max-width: 768px)'
-    ).matches;
+    return window.matchMedia('(max-width: 768px)').matches;
   }
 
   function getVideoSource() {
-    return isMobile()
-      ? MEDIA.portrait
-      : MEDIA.landscape;
+    return isMobile() ? MEDIA.portrait : MEDIA.landscape;
   }
 
   function showPlayButton(message = '▶ PLAY VIDEO') {
@@ -133,13 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadVideo(source) {
     video.pause();
-
     video.src = source;
     video.preload = 'auto';
     video.playsInline = true;
     video.muted = false;
     video.volume = 1;
-
     video.load();
   }
 
@@ -153,53 +201,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // OPEN INVITATION BUTTON
+  // =========================================
+  // OPEN INVITATION
+  // =========================================
 
   openButton.addEventListener('click', () => {
-    // This click is a valid user interaction.
-    // Start music here to unlock audio playback.
-    // The music resumes after the intro video.
 
-    if (soundEnabled) {
-      music.play().then(() => {
-        stopMusic();
-      }).catch(() => {
-        stopMusic();
-      });
-    }
+    // Browser has received a genuine user gesture.
+    // Do not start and immediately cancel music.play().
+    // The intro video remains separate from background music.
+
+    pauseMusic();
 
     showScreen('video');
-
-    // Stop background music during video.
-    stopMusic();
-
     hidePlayButton();
 
-    videoRequest++;
     loadVideo(getVideoSource());
-
     attemptVideoPlayback();
   });
 
-  // MANUAL VIDEO PLAY FALLBACK
-
+  // Manual video playback
   playVideoButton.addEventListener('click', () => {
     attemptVideoPlayback();
   });
 
-  // VIDEO ERROR HANDLING
-
+  // Video error
   video.addEventListener('error', () => {
-    console.error(
-      'Unable to load intro video:',
-      video.currentSrc
-    );
-
+    console.error('Unable to load intro video:', video.currentSrc);
     showPlayButton('VIDEO UNAVAILABLE — SKIP INTRO');
   });
 
-  // RETRY PLAYBACK WHEN VIDEO CAN PLAY
-
+  // Retry video when ready
   video.addEventListener('canplay', () => {
     if (
       currentStage === 'video' &&
@@ -210,12 +242,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // =========================================
   // FINAL INVITATION
+  // =========================================
 
   function openFinalInvitation() {
-    videoRequest++;
     video.pause();
-
     showScreen('invitation');
 
     if (soundEnabled) {
@@ -225,14 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   video.addEventListener('ended', openFinalInvitation);
 
-  skipButton.addEventListener(
-    'click', openFinalInvitation
-  );
+  skipButton.addEventListener('click', openFinalInvitation);
 
+  // =========================================
   // RETURN TO COVER
+  // =========================================
 
   closeButton.addEventListener('click', () => {
-    videoRequest++;
     video.pause();
 
     try {
@@ -248,11 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // MOBILE ORIENTATION / SCREEN CHANGE
+  // =========================================
+  // MOBILE ORIENTATION
+  // =========================================
 
-  const mediaQuery = window.matchMedia(
-    '(max-width: 768px)'
-  );
+  const mediaQuery = window.matchMedia('(max-width: 768px)');
 
   function handleScreenChange() {
     if (currentStage !== 'video') return;
@@ -268,24 +299,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (mediaQuery.addEventListener) {
-    mediaQuery.addEventListener(
-      'change', handleScreenChange
-    );
+    mediaQuery.addEventListener('change', handleScreenChange);
   } else {
     mediaQuery.addListener(handleScreenChange);
   }
 
+  // =========================================
   // DANCER AND DRUMMER ANIMATIONS
+  // =========================================
 
   function setupCharacter(id) {
     const character = document.getElementById(id);
-
     if (!character) return;
 
     character.addEventListener('click', () => {
-      if (character.classList.contains('vanished')) {
-        return;
-      }
+      if (character.classList.contains('vanished')) return;
 
       character.classList.add('vanished');
 
@@ -298,7 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCharacter('leftDancer');
   setupCharacter('rightDrummer');
 
+  // =========================================
   // SPINNING FLOWERS
+  // =========================================
 
   const flowerLayouts = {
     cover: [
@@ -320,17 +350,13 @@ document.addEventListener('DOMContentLoaded', () => {
     ]
   };
 
-  document.querySelectorAll(
-    '.flower-field'
-  ).forEach(field => {
-
+  document.querySelectorAll('.flower-field').forEach(field => {
     const screen = field.closest('.cover-screen')
       ? 'cover'
       : 'invitation';
 
     flowerLayouts[screen].forEach(
       ([left, top, size, speed, direction]) => {
-
         const img = document.createElement('img');
 
         img.src = 'images/flower-icon.png';
@@ -345,43 +371,29 @@ document.addEventListener('DOMContentLoaded', () => {
           `clamp(25px, ${size / 12}vw, ${size}px)`
         );
 
-        img.style.setProperty(
-          '--flower-speed',
-          `${speed}s`
-        );
-
-        img.style.setProperty(
-          '--flower-direction',
-          direction
-        );
+        img.style.setProperty('--flower-speed', `${speed}s`);
+        img.style.setProperty('--flower-direction', direction);
 
         field.appendChild(img);
       }
     );
   });
 
+  // =========================================
   // GOLD PARTICLES
+  // =========================================
 
-  document.querySelectorAll(
-    '.particles'
-  ).forEach(container => {
-
+  document.querySelectorAll('.particles').forEach(container => {
     for (let i = 0; i < 25; i++) {
       const particle = document.createElement('span');
 
       particle.className = 'particle';
-
-      particle.style.left =
-        `${Math.random() * 100}%`;
-
-      particle.style.animationDelay =
-        `${Math.random() * 12}s`;
-
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.animationDelay = `${Math.random() * 12}s`;
       particle.style.animationDuration =
         `${7 + Math.random() * 8}s`;
 
       const size = 2 + Math.random() * 3;
-
       particle.style.width = `${size}px`;
       particle.style.height = `${size}px`;
 
@@ -389,48 +401,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // INITIALIZE
+  // =========================================
+  // INITIALIZE AUDIO AND COVER
+  // =========================================
 
-  updateSoundButtons();
   showScreen('cover');
 
-  // Try autoplay, but browsers may require interaction.
+  // Attempt autoplay. Browsers may block audible autoplay.
   playMusic();
 
-  // Start music after first user interaction
-  // if the visitor remains on the cover.
+  // First genuine interaction on the cover starts music.
+  // Exclude sound button and OPEN INVITATION because
+  // those controls already handle their own actions.
+  document.addEventListener('pointerdown', event => {
+    if (event.target.closest(
+      '[data-sound-toggle], #openInvitation'
+    )) return;
 
-  document.addEventListener(
-    'pointerdown',
-    event => {
-      if (
-        event.target.closest(
-          '[data-sound-toggle], #openInvitation'
-        )
-      ) return;
+    unlockAudio();
+  }, { passive: true });
 
-      if (
-        currentStage === 'cover' &&
+  document.addEventListener('keydown', event => {
+    if (event.target.closest(
+      '[data-sound-toggle], #openInvitation'
+    )) return;
+
+    unlockAudio();
+  });
+
+  // When the visitor returns to the browser tab,
+  // try resuming only if sound is enabled.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden &&
         soundEnabled &&
-        music.paused
-      ) {
-        playMusic();
-      }
-    },
-    { passive: true }
-  );
-
-  document.addEventListener(
-    'keydown',
-    event => {
-      if (
-        currentStage === 'cover' &&
-        soundEnabled &&
-        music.paused
-      ) {
-        playMusic();
-      }
+        currentStage !== 'video' &&
+        audioUnlocked &&
+        music.paused) {
+      playMusic();
     }
-  );
+  });
 
 });
