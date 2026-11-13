@@ -36,31 +36,65 @@ document.addEventListener('DOMContentLoaded', () => {
   music.muted = false;
   music.preload = 'auto';
 
+  // Speaker icons only — no visible words.
+  const soundOnIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="24" height="24"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.8"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M11 5 6 9H3v6h3l5 4V5Z"/>
+      <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+      <path d="M19 5a10 10 0 0 1 0 14"/>
+    </svg>
+  `;
+
+  const soundOffIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="24" height="24"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.8"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M11 5 6 9H3v6h3l5 4V5Z"/>
+      <path d="m17 9 5 6"/>
+      <path d="m22 9-5 6"/>
+    </svg>
+  `;
+
   function updateSoundButtons() {
 
-    const isPlaying =
-      !music.paused &&
-      !music.muted &&
-      soundEnabled;
+    // The icon represents the selected sound setting.
+    // Music is paused intentionally during the intro video.
+    const isEnabled = soundEnabled;
 
     soundButtons.forEach(button => {
 
-      const label = button.querySelector('.sound-label');
       const icon = button.querySelector('.sound-icon');
 
-      if (label) {
-        label.textContent = isPlaying
-          ? 'SOUND ON'
-          : 'TAP FOR SOUND';
-      }
-
       if (icon) {
-        icon.textContent = isPlaying ? '♫' : '♪';
+        icon.innerHTML = isEnabled
+          ? soundOnIcon
+          : soundOffIcon;
       }
 
       button.setAttribute(
         'aria-pressed',
-        String(isPlaying)
+        String(isEnabled)
+      );
+
+      button.setAttribute(
+        'aria-label',
+        isEnabled
+          ? 'Mute background music'
+          : 'Unmute background music'
       );
 
     });
@@ -134,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Synchronize buttons with actual audio playback.
+  // Synchronize buttons with playback.
   music.addEventListener('play', updateSoundButtons);
   music.addEventListener('pause', updateSoundButtons);
 
@@ -153,27 +187,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // =========================================
-  // SOUND BUTTON — CORRECTED
+  // SOUND BUTTON — ICON ONLY
   // =========================================
 
   soundButtons.forEach(button => {
 
     button.addEventListener('click', () => {
 
-      // If music is playing, turn it OFF.
-      if (!music.paused && soundEnabled) {
+      if (soundEnabled) {
 
+        // Visitor chooses to mute.
         soundEnabled = false;
         pauseMusic();
         return;
       }
 
-      // If music is silent, start it on this tap.
+      // Visitor chooses to unmute.
       soundEnabled = true;
 
       music.muted = false;
       music.volume = 0.65;
 
+      updateSoundButtons();
       playMusic();
 
     });
@@ -530,11 +565,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showScreen('cover');
 
-  // Try autoplay. Online browsers may block it.
+  // Attempt to start with music enabled.
+  // Some browsers restrict automatic audio playback.
   playMusic();
 
   // First cover interaction can unlock audio.
-  // SOUND button manages itself.
+  // The speaker button manages itself.
   document.addEventListener(
     'pointerdown',
     event => {
