@@ -1,5 +1,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
+
   const coverScreen = document.getElementById('coverScreen');
   const videoScreen = document.getElementById('videoScreen');
   const invitationScreen = document.getElementById('invitationScreen');
@@ -29,32 +30,39 @@ document.addEventListener('DOMContentLoaded', () => {
   // BACKGROUND MUSIC
   // =========================================
 
-  // Use the source already defined in index.html.
-  // Do not assign music.src a second time.
+  // Audio source is already defined in index.html.
   music.loop = true;
   music.volume = 0.65;
   music.muted = false;
   music.preload = 'auto';
 
   function updateSoundButtons() {
-    const actuallyPlaying = !music.paused && !music.muted;
+
+    const isPlaying =
+      !music.paused &&
+      !music.muted &&
+      soundEnabled;
 
     soundButtons.forEach(button => {
+
       const label = button.querySelector('.sound-label');
       const icon = button.querySelector('.sound-icon');
 
-      const on = soundEnabled &&
-        (actuallyPlaying || currentStage === 'video');
-
       if (label) {
-        label.textContent = on ? 'SOUND ON' : 'SOUND OFF';
+        label.textContent = isPlaying
+          ? 'SOUND ON'
+          : 'TAP FOR SOUND';
       }
 
       if (icon) {
-        icon.textContent = on ? '♫' : '♪';
+        icon.textContent = isPlaying ? '♫' : '♪';
       }
 
-      button.setAttribute('aria-pressed', String(on));
+      button.setAttribute(
+        'aria-pressed',
+        String(isPlaying)
+      );
+
     });
   }
 
@@ -65,9 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playMusic() {
+
     if (!soundEnabled || currentStage === 'video') {
       return Promise.resolve(false);
     }
+
+    music.muted = false;
+    music.volume = 0.65;
 
     if (!music.paused) {
       updateSoundButtons();
@@ -75,8 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const request = ++musicRequest;
-
-    music.muted = false;
 
     let attempt;
 
@@ -90,9 +100,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return Promise.resolve(attempt)
       .then(() => {
-        if (request !== musicRequest ||
-            !soundEnabled ||
-            currentStage === 'video') {
+
+        if (
+          request !== musicRequest ||
+          !soundEnabled ||
+          currentStage === 'video'
+        ) {
           music.pause();
           updateSoundButtons();
           return false;
@@ -101,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audioUnlocked = true;
         updateSoundButtons();
         return true;
+
       })
       .catch(error => {
         console.warn('Music playback blocked:', error);
@@ -109,40 +123,61 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // User interactions can unlock browser audio.
   function unlockAudio() {
-    if (!soundEnabled || currentStage === 'video') return;
+
+    if (!soundEnabled || currentStage === 'video') {
+      return;
+    }
 
     if (music.paused) {
       playMusic();
     }
   }
 
-  // Actual playback events keep the icon accurate.
+  // Synchronize buttons with actual audio playback.
   music.addEventListener('play', updateSoundButtons);
   music.addEventListener('pause', updateSoundButtons);
+
   music.addEventListener('playing', () => {
     audioUnlocked = true;
     updateSoundButtons();
   });
 
   music.addEventListener('error', () => {
-    console.error('Unable to load background music:', music.error);
+    console.error(
+      'Unable to load background music:',
+      music.error
+    );
+
     updateSoundButtons();
   });
 
-  // SOUND ON / OFF
+  // =========================================
+  // SOUND BUTTON — CORRECTED
+  // =========================================
+
   soundButtons.forEach(button => {
+
     button.addEventListener('click', () => {
-      if (soundEnabled) {
+
+      // If music is playing, turn it OFF.
+      if (!music.paused && soundEnabled) {
+
         soundEnabled = false;
         pauseMusic();
-      } else {
-        soundEnabled = true;
-        updateSoundButtons();
-        playMusic();
+        return;
       }
+
+      // If music is silent, start it on this tap.
+      soundEnabled = true;
+
+      music.muted = false;
+      music.volume = 0.65;
+
+      playMusic();
+
     });
+
   });
 
   // =========================================
@@ -150,11 +185,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================
 
   function showScreen(stage) {
+
     currentStage = stage;
 
-    coverScreen.classList.toggle('active', stage === 'cover');
-    videoScreen.classList.toggle('active', stage === 'video');
-    invitationScreen.classList.toggle('active', stage === 'invitation');
+    coverScreen.classList.toggle(
+      'active',
+      stage === 'cover'
+    );
+
+    videoScreen.classList.toggle(
+      'active',
+      stage === 'video'
+    );
+
+    invitationScreen.classList.toggle(
+      'active',
+      stage === 'invitation'
+    );
 
     window.scrollTo(0, 0);
     updateSoundButtons();
@@ -165,11 +212,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================
 
   function isMobile() {
-    return window.matchMedia('(max-width: 768px)').matches;
+    return window.matchMedia(
+      '(max-width: 768px)'
+    ).matches;
   }
 
   function getVideoSource() {
-    return isMobile() ? MEDIA.portrait : MEDIA.landscape;
+    return isMobile()
+      ? MEDIA.portrait
+      : MEDIA.landscape;
   }
 
   function showPlayButton(message = '▶ PLAY VIDEO') {
@@ -182,16 +233,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function loadVideo(source) {
+
     video.pause();
+
     video.src = source;
     video.preload = 'auto';
     video.playsInline = true;
     video.muted = false;
     video.volume = 1;
+
     video.load();
   }
 
   async function attemptVideoPlayback() {
+
     try {
       await video.play();
       hidePlayButton();
@@ -207,10 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   openButton.addEventListener('click', () => {
 
-    // Browser has received a genuine user gesture.
-    // Do not start and immediately cancel music.play().
-    // The intro video remains separate from background music.
-
+    // Background music pauses during intro video.
     pauseMusic();
 
     showScreen('video');
@@ -218,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadVideo(getVideoSource());
     attemptVideoPlayback();
+
   });
 
   // Manual video playback
@@ -225,14 +278,22 @@ document.addEventListener('DOMContentLoaded', () => {
     attemptVideoPlayback();
   });
 
-  // Video error
+  // Video error handling
   video.addEventListener('error', () => {
-    console.error('Unable to load intro video:', video.currentSrc);
-    showPlayButton('VIDEO UNAVAILABLE — SKIP INTRO');
+
+    console.error(
+      'Unable to load intro video:',
+      video.currentSrc
+    );
+
+    showPlayButton(
+      'VIDEO UNAVAILABLE — SKIP INTRO'
+    );
   });
 
-  // Retry video when ready
+  // Retry video playback when ready
   video.addEventListener('canplay', () => {
+
     if (
       currentStage === 'video' &&
       video.paused &&
@@ -240,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ) {
       attemptVideoPlayback();
     }
+
   });
 
   // =========================================
@@ -247,7 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================
 
   function openFinalInvitation() {
+
     video.pause();
+
     showScreen('invitation');
 
     if (soundEnabled) {
@@ -255,15 +319,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  video.addEventListener('ended', openFinalInvitation);
+  video.addEventListener(
+    'ended',
+    openFinalInvitation
+  );
 
-  skipButton.addEventListener('click', openFinalInvitation);
+  skipButton.addEventListener(
+    'click',
+    openFinalInvitation
+  );
 
   // =========================================
   // RETURN TO COVER
   // =========================================
 
   closeButton.addEventListener('click', () => {
+
     video.pause();
 
     try {
@@ -277,31 +348,48 @@ document.addEventListener('DOMContentLoaded', () => {
     if (soundEnabled) {
       playMusic();
     }
+
   });
 
   // =========================================
   // MOBILE ORIENTATION
   // =========================================
 
-  const mediaQuery = window.matchMedia('(max-width: 768px)');
+  const mediaQuery = window.matchMedia(
+    '(max-width: 768px)'
+  );
 
   function handleScreenChange() {
-    if (currentStage !== 'video') return;
+
+    if (currentStage !== 'video') {
+      return;
+    }
 
     const newSource = getVideoSource();
     const currentSource = video.getAttribute('src');
 
     if (currentSource !== newSource) {
+
       hidePlayButton();
       loadVideo(newSource);
       attemptVideoPlayback();
+
     }
   }
 
   if (mediaQuery.addEventListener) {
-    mediaQuery.addEventListener('change', handleScreenChange);
+
+    mediaQuery.addEventListener(
+      'change',
+      handleScreenChange
+    );
+
   } else {
-    mediaQuery.addListener(handleScreenChange);
+
+    mediaQuery.addListener(
+      handleScreenChange
+    );
+
   }
 
   // =========================================
@@ -309,17 +397,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================
 
   function setupCharacter(id) {
+
     const character = document.getElementById(id);
-    if (!character) return;
+
+    if (!character) {
+      return;
+    }
 
     character.addEventListener('click', () => {
-      if (character.classList.contains('vanished')) return;
+
+      if (character.classList.contains('vanished')) {
+        return;
+      }
 
       character.classList.add('vanished');
 
       setTimeout(() => {
         character.classList.remove('vanished');
       }, 2000);
+
     });
   }
 
@@ -331,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================
 
   const flowerLayouts = {
+
     cover: [
       [4, 7, 76, 24, 'normal'],
       [88, 13, 48, 19, 'reverse'],
@@ -348,15 +445,20 @@ document.addEventListener('DOMContentLoaded', () => {
       [4, 79, 56, 33, 'normal'],
       [88, 91, 39, 20, 'reverse']
     ]
+
   };
 
-  document.querySelectorAll('.flower-field').forEach(field => {
+  document.querySelectorAll(
+    '.flower-field'
+  ).forEach(field => {
+
     const screen = field.closest('.cover-screen')
       ? 'cover'
       : 'invitation';
 
     flowerLayouts[screen].forEach(
       ([left, top, size, speed, direction]) => {
+
         const img = document.createElement('img');
 
         img.src = 'images/flower-icon.png';
@@ -371,74 +473,125 @@ document.addEventListener('DOMContentLoaded', () => {
           `clamp(25px, ${size / 12}vw, ${size}px)`
         );
 
-        img.style.setProperty('--flower-speed', `${speed}s`);
-        img.style.setProperty('--flower-direction', direction);
+        img.style.setProperty(
+          '--flower-speed',
+          `${speed}s`
+        );
+
+        img.style.setProperty(
+          '--flower-direction',
+          direction
+        );
 
         field.appendChild(img);
+
       }
     );
+
   });
 
   // =========================================
   // GOLD PARTICLES
   // =========================================
 
-  document.querySelectorAll('.particles').forEach(container => {
+  document.querySelectorAll(
+    '.particles'
+  ).forEach(container => {
+
     for (let i = 0; i < 25; i++) {
+
       const particle = document.createElement('span');
 
       particle.className = 'particle';
-      particle.style.left = `${Math.random() * 100}%`;
-      particle.style.animationDelay = `${Math.random() * 12}s`;
+
+      particle.style.left =
+        `${Math.random() * 100}%`;
+
+      particle.style.animationDelay =
+        `${Math.random() * 12}s`;
+
       particle.style.animationDuration =
         `${7 + Math.random() * 8}s`;
 
       const size = 2 + Math.random() * 3;
+
       particle.style.width = `${size}px`;
       particle.style.height = `${size}px`;
 
       container.appendChild(particle);
+
     }
+
   });
 
   // =========================================
-  // INITIALIZE AUDIO AND COVER
+  // INITIALIZE
   // =========================================
 
   showScreen('cover');
 
-  // Attempt autoplay. Browsers may block audible autoplay.
+  // Try autoplay. Online browsers may block it.
   playMusic();
 
-  // First genuine interaction on the cover starts music.
-  // Exclude sound button and OPEN INVITATION because
-  // those controls already handle their own actions.
-  document.addEventListener('pointerdown', event => {
-    if (event.target.closest(
-      '[data-sound-toggle], #openInvitation'
-    )) return;
+  // First cover interaction can unlock audio.
+  // SOUND button manages itself.
+  document.addEventListener(
+    'pointerdown',
+    event => {
 
-    unlockAudio();
-  }, { passive: true });
+      if (event.target.closest(
+        '[data-sound-toggle], #openInvitation'
+      )) {
+        return;
+      }
 
+      if (
+        currentStage === 'cover' &&
+        soundEnabled &&
+        music.paused
+      ) {
+        unlockAudio();
+      }
+
+    },
+    { passive: true }
+  );
+
+  // Keyboard interaction fallback
   document.addEventListener('keydown', event => {
+
     if (event.target.closest(
       '[data-sound-toggle], #openInvitation'
-    )) return;
+    )) {
+      return;
+    }
 
-    unlockAudio();
+    if (
+      currentStage === 'cover' &&
+      soundEnabled &&
+      music.paused
+    ) {
+      unlockAudio();
+    }
+
   });
 
-  // When the visitor returns to the browser tab,
-  // try resuming only if sound is enabled.
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden &&
+  // Resume music when returning to browser tab.
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+
+      if (
+        !document.hidden &&
         soundEnabled &&
         currentStage !== 'video' &&
         audioUnlocked &&
-        music.paused) {
-      playMusic();
+        music.paused
+      ) {
+        playMusic();
+      }
+
     }
-  });
+  );
 
 });
