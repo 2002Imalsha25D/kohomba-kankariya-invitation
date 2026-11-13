@@ -526,6 +526,7 @@ button:focus-visible {
 /* ==============================
    SOUND BUTTON
    SAME CORNER ON BOTH SCREENS
+   ICON ONLY — NO TEXT
 ============================== */
 
 .sound-button {
@@ -535,19 +536,29 @@ button:focus-visible {
   right: 20px;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 12px 17px;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
   border: 1px solid var(--gold);
-  border-radius: 35px;
+  border-radius: 50%;
   background: rgba(65,0,0,.94);
   color: var(--light-gold);
-  font-size: 10px;
-  letter-spacing: .12em;
   box-shadow: 0 0 18px rgba(255,137,0,.2);
 }
 
 .sound-icon {
-  font-size: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.sound-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
 /* INVITATION: SAME BOTTOM-RIGHT CORNER */
@@ -761,7 +772,9 @@ button:focus-visible {
   .sound-button {
     bottom: 12px;
     right: 12px;
-    padding: 10px 13px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
   }
 
   /* SAME SOUND POSITION ON INVITATION */
