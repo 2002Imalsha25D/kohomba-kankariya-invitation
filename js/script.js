@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const MEDIA = {
     landscape: 'videos/intro-landscape.mp4',
     portrait: 'videos/intro-portrait.mp4',
-    music: 'audio/background-music.mp3'
+    music: 'audio/background-music.MP3'
   };
 
   let currentStage = 'cover';
