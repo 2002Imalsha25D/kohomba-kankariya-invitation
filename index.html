@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#470000">
+
+  <title>A Blessing for Sri Lanka | Vintage Ceylon</title>
+
+  <meta name="description"
+        content="Kohomba Kankariya — A Blessing for Sri Lanka. 31 December 2026 at Vintage Ceylon Heritage Mall.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Montserrat:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/script.js" defer></script>
+</head>
+
+<body>
+
+  <!-- BACKGROUND MUSIC -->
+  <audio id="backgroundMusic" loop preload="auto">
+    <source src="audio/background-music.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- SCREEN 1: COVER -->
+  <section id="coverScreen" class="screen cover-screen active">
+
+    <div class="particles" aria-hidden="true"></div>
+    <div class="flower-field" aria-hidden="true"></div>
+
+    <div class="cover-content">
+
+      <img src="images/logo.png"
+           alt="Vintage Ceylon"
+           class="brand-logo cover-logo">
+
+      <p class="eyebrow">A CULTURAL INVITATION</p>
+
+      <img src="images/background_pic.png"
+           alt="Traditional Kohomba Kankariya ritual"
+           class="cover-artwork">
+
+      <img src="images/sinhala-title.png"
+           alt="කොහොඹා කංකාරිය"
+           class="sinhala-art cover-sinhala">
+
+      <h1 class="main-title">
+        A Blessing <span>for Sri Lanka</span>
+      </h1>
+
+      <p class="cover-description">
+        THE SACRED HERITAGE RITUAL OF SRI LANKA
+      </p>
+
+      <button id="openInvitation"
+              class="gold-button"
+              type="button">
+        OPEN INVITATION <span>→</span>
+      </button>
+
+      <p class="cover-footer">
+        ONE ISLAND · ONE HERITAGE · BLESSINGS FOR ALL
+      </p>
+
+    </div>
+
+    <button class="sound-button"
+            type="button"
+            data-sound-toggle
+            aria-label="Toggle background music"
+            aria-pressed="true">
+      <span class="sound-icon">♫</span>
+      <span class="sound-label">SOUND ON</span>
+    </button>
+
+  </section>
+
+  <!-- SCREEN 2: INTRO VIDEO -->
+  <section id="videoScreen" class="screen video-screen">
+
+    
+<video
+  id="introVideo"
+  playsinline
+  webkit-playsinline
+  preload="auto"
+  poster="images/background_pic.png"
+>
+  Your browser does not support HTML5 video.
+</video>
+
+
+    <button id="playVideoButton"
+            class="video-play-button hidden"
+            type="button">
+      ▶ PLAY VIDEO
+    </button>
+
+    <button id="skipVideo"
+            class="skip-button"
+            type="button">
+      SKIP INTRO →
+    </button>
+
+  </section>
+
+  <!-- SCREEN 3: INVITATION -->
+  <section id="invitationScreen" class="screen invitation-screen">
+
+    <div class="particles" aria-hidden="true"></div>
+    <div class="flower-field" aria-hidden="true"></div>
+
+    <div class="invitation-content">
+
+      <img src="images/logo.png"
+           alt="Vintage Ceylon"
+           class="brand-logo invitation-logo">
+
+      <p class="eyebrow">
+        A CULTURAL INVITATION
+      </p>
+
+      <h1 class="main-title invitation-title">
+        A Blessing <span>for Sri Lanka</span>
+      </h1>
+
+      <img src="images/sinhala-title.png"
+           alt="කොහොඹා කංකාරිය"
+           class="sinhala-art invitation-sinhala">
+
+      <p class="ritual-description">
+        THE SACRED HERITAGE RITUAL OF SRI LANKA
+      </p>
+
+      <p class="heritage-message">
+        One Island. One Heritage. Blessings for All.
+      </p>
+
+      <div class="event-details">
+
+        <h2>31 DECEMBER 2026</h2>
+
+        <p class="venue">
+          Vintage Ceylon Heritage Mall
+        </p>
+
+        <p class="address">
+          Marine Drive, Colombo 04, Sri Lanka
+        </p>
+
+        <p class="event-time">
+          Time - 7 p.m onwards
+        </p>
+
+      </div>
+
+      <p class="closing-message">
+        May our island welcome a new year<br>
+        with peace, unity and prosperity.
+      </p>
+
+      <p class="invitation-brand">
+        VINTAGE CEYLON
+      </p>
+
+    </div>
+
+    <!-- WORD IMAGES AT THE BOTTOM OF THE PAGE -->
+    <div class="heritage-words">
+
+      <img src="images/word_1.png"
+           alt="Heritage phrase one"
+           class="heritage-word word-one">
+
+      <img src="images/word_2.png"
+           alt="Heritage phrase two"
+           class="heritage-word word-two">
+
+      <img src="images/word_3.png"
+           alt="Heritage phrase three"
+           class="heritage-word word-three">
+
+      <img src="images/word_4.png"
+           alt="Heritage phrase four"
+           class="heritage-word word-four">
+
+      <img src="images/word_5.png"
+           alt="Heritage phrase five"
+           class="heritage-word word-five">
+
+    </div>
+
+    <!-- FIXED LEFT DANCER -->
+    <button id="leftDancer"
+            class="fixed-character left-character"
+            type="button"
+            aria-label="Kandyan dancer animation">
+
+      <img src="images/kandyan-dancer.png"
+           alt="Traditional Kandyan dancer"
+           draggable="false">
+
+    </button>
+
+    <!-- FIXED RIGHT DRUMMER -->
+    <button id="rightDrummer"
+            class="fixed-character right-character"
+            type="button"
+            aria-label="Traditional drummer animation">
+
+      <img src="images/traditional_drummer.png"
+           alt="Traditional Sri Lankan drummer"
+           draggable="false">
+
+    </button>
+
+    <!-- CLOSE BUTTON -->
+    <button id="closeInvitation"
+            class="close-button"
+            type="button"
+            aria-label="Return to cover">
+      ✕
+    </button>
+
+    <!-- SOUND BUTTON -->
+    <button class="sound-button"
+            type="button"
+            data-sound-toggle
+            aria-label="Toggle background music"
+            aria-pressed="true">
+
+      <span class="sound-icon">♫</span>
+      <span class="sound-label">SOUND ON</span>
+
+    </button>
+
+  </section>
+
+</body>
+</html>
